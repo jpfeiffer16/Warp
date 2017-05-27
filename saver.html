@@ -1,0 +1,49 @@
+<script>
+  (function warp() {
+    var jquery = document.createElement('script'),
+      head = document.head || document.getElementsByTagName('head')[0];
+
+    jquery.src = 'https://code.jquery.com/jquery-3.2.1.min.js';
+    head.insertBefore(jquery, head.firstChild);
+
+    var fileSaver = document.createElement('script');
+    fileSaver.src = 'https://rawgit.com/eligrey/FileSaver.js/master/FileSaver.min.js';
+    head.insertBefore(fileSaver, head.firstChild);
+
+    var jszip = document.createElement('script');
+    jszip.src = 'https://rawgit.com/Stuk/jszip/master/dist/jszip.min.js';
+    head.insertBefore(jszip, head.firstChild);
+
+    setTimeout(function () {
+      $.getJSON("http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?",
+        {
+          tags: 'cat',
+          tagmode: "any",
+          format: "json"
+        },
+        function (data) {
+          var rnd = Math.floor(Math.random() * data.items.length);
+          var image_src = data.items[rnd]['media']['m'].replace("_m", "_m");
+
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+              var imageBlob = this.response;
+              var zip = new JSZip();
+              zip.file("code.js", warp.toString());
+
+              zip.generateAsync({ type: "blob" })
+                .then(function (content) {
+                  var finalBlob = new Blob([imageBlob, content]);
+                  saveAs(finalBlob, "timewarp.jpeg");
+                });
+            }
+          }
+          xhr.open('GET', image_src);
+          xhr.responseType = 'blob';
+          xhr.send();
+        });
+    }, 300);
+  })();
+
+</script>
